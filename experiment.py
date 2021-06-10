@@ -4,10 +4,10 @@ from torch import optim
 from models import BaseVAE
 from models.types_ import *
 from utils import data_loader
+from custom_dataset import CustomDataset
 import pytorch_lightning as pl
 from torchvision import transforms
 import torchvision.utils as vutils
-from torchvision.datasets import CelebA
 from torch.utils.data import DataLoader
 
 
@@ -132,15 +132,14 @@ class VAEXperiment(pl.LightningModule):
         except:
             return optims
 
+
     @data_loader
     def train_dataloader(self):
         transform = self.data_transforms()
 
-        if self.params['dataset'] == 'celeba':
-            dataset = CelebA(root = self.params['data_path'],
-                             split = "train",
-                             transform=transform,
-                             download=False)
+        if self.params['dataset'] == 'fire':
+            dataset = CustomDataset(root_dir=self.params['data_path'], split = "train", transform=transform)
+
         else:
             raise ValueError('Undefined dataset type')
 
@@ -154,11 +153,10 @@ class VAEXperiment(pl.LightningModule):
     def val_dataloader(self):
         transform = self.data_transforms()
 
-        if self.params['dataset'] == 'celeba':
-            self.sample_dataloader =  DataLoader(CelebA(root = self.params['data_path'],
-                                                        split = "test",
-                                                        transform=transform,
-                                                        download=False),
+        if self.params['dataset'] == 'fire':
+            self.sample_dataloader =  DataLoader(CustomDataset(root = self.params['data_path'],
+                                                        split = "valid",
+                                                        transform=transform),
                                                  batch_size= 144,
                                                  shuffle = True,
                                                  drop_last=True)
@@ -173,7 +171,7 @@ class VAEXperiment(pl.LightningModule):
         SetRange = transforms.Lambda(lambda X: 2 * X - 1.)
         SetScale = transforms.Lambda(lambda X: X/X.sum(0).expand_as(X))
 
-        if self.params['dataset'] == 'celeba':
+        if self.params['dataset'] == 'fire':
             transform = transforms.Compose([transforms.RandomHorizontalFlip(),
                                             transforms.CenterCrop(148),
                                             transforms.Resize(self.params['img_size']),
